@@ -4,6 +4,7 @@ import Server.ClientThread;
 
 import java.io.Serializable;
 import java.util.LinkedList;
+import java.util.Objects;
 
 public abstract class ChatRoom implements Serializable {
 
@@ -81,4 +82,28 @@ public abstract class ChatRoom implements Serializable {
      * @param thread the element to add
      */
     public abstract void addClientThread(ClientThread thread);
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ChatRoom chatRoom = (ChatRoom) o;
+        return Objects.equals(nameRoom, chatRoom.nameRoom) &&
+                Objects.equals(listClient, chatRoom.listClient) &&
+                Objects.equals(userNameList, chatRoom.userNameList);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(nameRoom, listClient, userNameList);
+    }
+
+    @Override
+    public String toString() {
+        return "ChatRoom{" +
+                "nameRoom='" + nameRoom + '\'' +
+                ", listClient=" + listClient +
+                ", userNameList=" + userNameList +
+                '}';
+    }
 }

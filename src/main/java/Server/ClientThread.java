@@ -5,6 +5,7 @@ import Room.ChatRoom;
 import java.io.*;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class ClientThread implements Runnable {
@@ -74,4 +75,29 @@ public class ClientThread implements Runnable {
         return out;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ClientThread that = (ClientThread) o;
+        return Objects.equals(out, that.out) &&
+                Objects.equals(in, that.in) &&
+                Objects.equals(room, that.room) &&
+                Objects.equals(userName, that.userName);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(out, in, room, userName);
+    }
+
+    @Override
+    public String toString() {
+        return "ClientThread{" +
+                "out=" + out +
+                ", in=" + in +
+                ", room=" + room +
+                ", userName='" + userName + '\'' +
+                '}';
+    }
 }
