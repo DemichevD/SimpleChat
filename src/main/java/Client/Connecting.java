@@ -54,7 +54,10 @@ public class Connecting {
                 DbHandler dbHandler = DbHandler.getInstance();
                 System.out.println("Enter new login: ");
                 String userLogin = input.readLine();
-                if (dbHandler.containsUser(userLogin)) {
+                userLogin = userLogin.replace(" ", "");
+                if (userLogin.isEmpty()){
+                    System.out.println("Login not must be empty");
+                }else if (dbHandler.containsUser(userLogin)) {
                     System.out.println("Enter password: ");
                     String userPass = input.readLine();
                     dbHandler.addNewUser(userLogin, userPass);
