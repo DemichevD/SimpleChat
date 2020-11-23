@@ -1,12 +1,12 @@
-package Server;
+package server;
 
-import Room.ChatRoom;
+import room.ChatRoom;
 
 import java.io.*;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.Objects;
-import java.util.stream.Collectors;
+
 
 public class ClientThread implements Runnable {
     /**
@@ -18,51 +18,50 @@ public class ClientThread implements Runnable {
      * @param room the Chatroom in which users communicate
      */
 
-    private final BufferedWriter out;
-    private final BufferedReader in;
+    private final BufferedWriter outgoingData;
+    private final BufferedReader inputData;
     private final ChatRoom room;
     private final String userName;
 
     public ClientThread(Socket socket, ChatRoom room, String name) throws IOException {
-        out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
-        in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        outgoingData = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+        inputData = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         this.room = room;
         this.userName = name;
     }
 
     @Override
     public void run() {
-
+        ChatMessage chatMessage = new ChatMessage();
         try {
-            ChatMessage.sendNewUser(room, userName);
-            ChatMessage.sendHelpOption(this);
-            ChatMessage.loadHistoryMessage(this);
+            chatMessage.sendNewUser(room, userName);
+            chatMessage.sendHelpOption(this);
+            chatMessage.loadHistoryMessage(this);
             String incomingMessage;
             label:
             while (true) {
-                incomingMessage = in.readLine();
+                incomingMessage = inputData.readLine();
                 if (incomingMessage.replace(" ", "").equals(""))
                     continue;
-                switch (incomingMessage) {
-                    case "\\quit":
-                        ChatMessage.sendUserDisconnect(room, userName);
-                        out.write("\\quit" + '\n');
-                        out.flush();
-                        break label;
-                    case "\\help":
-                        ChatMessage.sendInfo(this);
-                        continue;
-                    case "\\users":
-                        ChatMessage.sendListOnlineUsers(this, room);
-                        continue;
+                if (incomingMessage.equals(MessageCommand.QUIT.getCommand())) {
+                    chatMessage.sendUserDisconnect(room, userName);
+                    outgoingData.write(MessageCommand.QUIT.getCommand() + '\n');
+                    outgoingData.flush();
+                    break;
+                } else if (incomingMessage.equals(MessageCommand.HELP.getCommand())) {
+                    chatMessage.sendInfo(this);
+                    continue;
+                } else if (incomingMessage.equals(MessageCommand.USERS.getCommand())) {
+                    chatMessage.sendListOnlineUsers(this, room);
+                    continue;
                 }
-                ChatMessage.sendToAll(incomingMessage, room, userName);
-                ChatMessage.addMessageInDB(userName, incomingMessage, room);
+                chatMessage.sendToAll(incomingMessage, room, userName, this);
+                chatMessage.addMessageInDB(userName, incomingMessage, room);
             }
         } catch (SocketException e) {
             room.removeUser(userName);
             room.removeClientThread(this);
-            ChatMessage.sendUserDisconnect(room, userName);
+            chatMessage.sendUserDisconnect(room, userName);
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
@@ -71,8 +70,8 @@ public class ClientThread implements Runnable {
         }
     }
 
-    public BufferedWriter getOut() {
-        return out;
+    public BufferedWriter getOutgoingData() {
+        return outgoingData;
     }
 
     @Override
@@ -80,22 +79,22 @@ public class ClientThread implements Runnable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         ClientThread that = (ClientThread) o;
-        return Objects.equals(out, that.out) &&
-                Objects.equals(in, that.in) &&
+        return Objects.equals(outgoingData, that.outgoingData) &&
+                Objects.equals(inputData, that.inputData) &&
                 Objects.equals(room, that.room) &&
                 Objects.equals(userName, that.userName);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(out, in, room, userName);
+        return Objects.hash(outgoingData, inputData, room, userName);
     }
 
     @Override
     public String toString() {
         return "ClientThread{" +
-                "out=" + out +
-                ", in=" + in +
+                "out=" + outgoingData +
+                ", in=" + inputData +
                 ", room=" + room +
                 ", userName='" + userName + '\'' +
                 '}';

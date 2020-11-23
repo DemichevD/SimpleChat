@@ -1,4 +1,6 @@
-package Client;
+package client;
+
+import server.MessageCommand;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -12,16 +14,19 @@ public class ClientInputMessage implements Runnable {
      * This <code>ClientInputMessage<code> class realizes checking and getting new messages from the server
      *
      * @author d.demichev
-     * @param in Reads text from a character-input stream
+     * @param inputData Reads text from a character-input stream
      * @param clientLatch latch terminating the thread of user-server interaction
      */
 
-    private final BufferedReader in;
+    private final BufferedReader inputData;
     private final CountDownLatch clientLatch;
+    private Client client;
 
-    public ClientInputMessage(Socket socket, CountDownLatch latch) throws IOException {
-        in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+    public ClientInputMessage(Socket socket, CountDownLatch latch, Client client) throws IOException {
+        inputData = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         this.clientLatch = latch;
+        this.client = client;
+
     }
 
     @Override
@@ -29,8 +34,8 @@ public class ClientInputMessage implements Runnable {
         String incomingMessage;
         try {
             while (true) {
-                incomingMessage = in.readLine();
-                if (incomingMessage.equals("\\quit")) {
+                incomingMessage = inputData.readLine();
+                if (incomingMessage.equals(MessageCommand.QUIT.getCommand())) {
                     break;
                 }
                 System.out.println(incomingMessage);
@@ -38,7 +43,7 @@ public class ClientInputMessage implements Runnable {
         } catch (NullPointerException | SocketException e) {
             System.out.println("Error" + e);
             try {
-                Client.reconnectToServer();
+                client.reconnectToServer();
             } catch (InterruptedException e1) {
                 e1.printStackTrace();
             }

@@ -1,8 +1,10 @@
-package Client;
+package client;
 
-import Server.User;
+import server.User;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.ObjectOutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -25,18 +27,28 @@ public class Client {
      * @param PORT server service port
      * @param address address the connection to the server
      */
-    protected static final CountDownLatch clientLatch = new CountDownLatch(2);
-    private static Socket clientSocket;
-    protected static ThreadPoolExecutor clientPool;
-    protected static ObjectOutputStream getUser;
-    private static final String hostname = "localhost";
-    private static final int PORT = 2020;
-    private static final InetSocketAddress address = new InetSocketAddress(hostname, PORT);
+    protected CountDownLatch clientLatch = new CountDownLatch(2);
+    private Socket clientSocket;
+    protected ThreadPoolExecutor clientPool;
+    protected ObjectOutputStream getUser;
+    private static String hostname;
+    private static int PORT;
 
-    /**
-     * This method realizes the connection new clientSocket to the server
-     */
-    private static void connectToServer() {
+    static {
+        BufferedReader inputData = new BufferedReader(new InputStreamReader(System.in));
+        try {
+            System.out.println("Please enter IP address: ");
+            hostname = inputData.readLine();
+            System.out.println("Please enter a PORT to the connect: ");
+            PORT = Integer.parseInt(inputData.readLine());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private final InetSocketAddress address = new InetSocketAddress(hostname, PORT);
+
+    private void connectToServer() {
         try {
             clientSocket = new Socket();
             while (true) {
@@ -52,10 +64,8 @@ public class Client {
         }
     }
 
-    /**
-     * This method realizes the reconnect clientSocket to the server if the server is not available
-     */
-    protected static void reconnectToServer() throws InterruptedException {
+
+    protected void reconnectToServer() throws InterruptedException {
         if (clientSocket != null && clientSocket.isConnected()) {
             try {
                 clientSocket.close();
@@ -68,17 +78,14 @@ public class Client {
         connectClient();
     }
 
-    /**
-     * This method realizes authorization of the new user, sending user info on the server, executes
-     * thread pool for sending and getting the messages
-     */
-    private static void connectClient() {
+
+    private void connectClient() {
         try {
-            User user = Connecting.connect();
+            User user = UserConnection.connect();
             clientPool = new ThreadPoolExecutor(2, 2, 60, TimeUnit.SECONDS, new ArrayBlockingQueue<>(100));
             getUser = new ObjectOutputStream(clientSocket.getOutputStream());
             getUser.writeObject(user);
-            clientPool.execute(new ClientInputMessage(clientSocket, clientLatch));
+            clientPool.execute(new ClientInputMessage(clientSocket, clientLatch, this));
             clientPool.execute(new ClientOutputMessage(clientSocket, clientLatch));
             clientLatch.await();
             clientPool.shutdownNow();
@@ -89,13 +96,9 @@ public class Client {
         }
     }
 
-    /**
-     * Checks server availability
-     *
-     * @return true if server available of false otherwise
-     */
+
     private static boolean serverAvailable() {
-        try (Socket checkServer = new Socket(hostname, PORT)) {
+        try (Socket socket = new Socket(hostname, PORT)) {
             return true;
         } catch (Exception e) {
             return false;

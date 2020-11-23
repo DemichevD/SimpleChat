@@ -1,4 +1,4 @@
-package Server;
+package server;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -22,7 +22,7 @@ public class ServerThread implements Runnable {
             try {
                 word = reader.readLine();
                 System.out.println("Server: " + word + '\n');
-                if (word.equals("\\stop")) {
+                if (word.equals(MessageCommand.STOP.getCommand())) {
                     System.out.println("Stop-Server");
                     Server.stopServer();
                 }

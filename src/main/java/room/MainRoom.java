@@ -1,21 +1,21 @@
-package Room;
+package room;
 
-import Server.ClientThread;
+import server.ClientThread;
 
 import java.io.Serializable;
-import java.util.LinkedList;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 public class MainRoom extends ChatRoom implements Serializable {
 
     private static String nameRoom = "MainRoom";
 
     @Override
-    public synchronized String getNameRoom() {
+    public String getNameRoom() {
         return nameRoom;
     }
 
     @Override
-    public synchronized void setNameRoom(String newName) {
+    public void setNameRoom(String newName) {
         if (newName == null)
             throw new NullPointerException();
         else {
@@ -24,23 +24,23 @@ public class MainRoom extends ChatRoom implements Serializable {
     }
 
     @Override
-    public synchronized LinkedList<ClientThread> getListClient() {
+    public  CopyOnWriteArraySet<ClientThread> getListClient() {
         return listClient;
     }
 
     @Override
-    public synchronized LinkedList<String> getUserList() {
+    public CopyOnWriteArraySet<String> getUserList() {
         return userNameList;
     }
 
     @Override
-    public synchronized void removeUser(String user) {
+    public void removeUser(String user) {
         userNameList.remove(user);
 
     }
 
     @Override
-    public synchronized void removeClientThread(ClientThread thread) {
+    public void removeClientThread(ClientThread thread) {
         listClient.remove(thread);
     }
 

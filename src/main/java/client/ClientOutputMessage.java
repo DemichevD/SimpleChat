@@ -1,4 +1,6 @@
-package Client;
+package client;
+
+import server.MessageCommand;
 
 import java.io.*;
 import java.net.Socket;
@@ -10,18 +12,18 @@ public class ClientOutputMessage implements Runnable {
      * This <code>ClientOutputMessage<code> class realizes getting information from the user and sending to the server
      *
      * @author d.demichev
-     * @param in Reads text from a character-input stream
-     * @param out Writes text to a character-output stream
+     * @param inputData Reads text from a character-input stream
+     * @param outgoingData Writes text to a character-output stream
      * @param clientLatch latch terminating the thread of user-server interaction
      */
 
-    private final BufferedReader in;
-    private final BufferedWriter out;
+    private final BufferedReader inputData;
+    private final BufferedWriter outgoingData;
     private final CountDownLatch clientLatch;
 
     public ClientOutputMessage(Socket socket, CountDownLatch latch) throws IOException {
-        in = new BufferedReader(new InputStreamReader(System.in));
-        out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+        inputData = new BufferedReader(new InputStreamReader(System.in));
+        outgoingData = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
         this.clientLatch = latch;
     }
 
@@ -30,17 +32,17 @@ public class ClientOutputMessage implements Runnable {
         try {
             while (true) {
                 String outgoingMessage;
-                out.write("" + '\n');
-                out.flush();
+                outgoingData.write("" + '\n');
+                outgoingData.flush();
                 try {
-                    outgoingMessage = in.readLine();
-                    if (outgoingMessage.equals("\\quit")) {
-                        out.write("\\quit" + '\n');
-                        out.flush();
+                    outgoingMessage = inputData.readLine();
+                    if (outgoingMessage.equals(MessageCommand.QUIT.getCommand())) {
+                        outgoingData.write(MessageCommand.QUIT.getCommand() + '\n');
+                        outgoingData.flush();
                         break;
                     } else {
-                        out.write(outgoingMessage + '\n');
-                        out.flush();
+                        outgoingData.write(outgoingMessage + '\n');
+                        outgoingData.flush();
                     }
                 } catch (SocketException e) {
                     break;

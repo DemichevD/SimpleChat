@@ -1,9 +1,11 @@
-package Server;
+package server;
 
-import Room.ChatRoom;
-import Room.MainRoom;
+import room.ChatRoom;
+import room.MainRoom;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -24,15 +26,23 @@ public class Server {
      * @param server server socket
      * @param client user socket
      */
-    private static final int PORT = 2020;
-    private static final ThreadPoolExecutor clientPool = new ThreadPoolExecutor(10, 100, 60, TimeUnit.SECONDS, new ArrayBlockingQueue<>(100));
-    private static final ThreadPoolExecutor serverPool = new ThreadPoolExecutor(2, 10, 60, TimeUnit.SECONDS, new ArrayBlockingQueue<>(10));
-    private static ServerSocket server;
-    private static Socket client;
 
-    /**
-     * This method realizes start server and connecting new users to him
-     */
+    private static int PORT;
+    private final ThreadPoolExecutor clientPool = new ThreadPoolExecutor(10, 100, 60, TimeUnit.SECONDS, new ArrayBlockingQueue<>(100));
+    private final ThreadPoolExecutor serverPool = new ThreadPoolExecutor(2, 10, 60, TimeUnit.SECONDS, new ArrayBlockingQueue<>(10));
+    private static ServerSocket server;
+    private Socket client;
+
+    static {
+        BufferedReader inputData = new BufferedReader(new InputStreamReader(System.in));
+        System.out.println("Please enter a PORT to the connect:");
+        try {
+            PORT = Integer.parseInt(inputData.readLine());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     private void startServer() {
         try {
             server = new ServerSocket(PORT);
@@ -49,7 +59,10 @@ public class Server {
                     mainRoom.getListClient().add(clientThread);
                     clientPool.execute(clientThread);
                 } catch (SocketException e) {
-                    System.out.println("Server was stopped");
+                    if (e.getMessage().equals("Connection reset"))
+                        System.out.println("Client not connection");
+                    else
+                        System.out.println("Server was stopped");
                 } catch (IOException e) {
                     client.close();
                 }
@@ -62,9 +75,7 @@ public class Server {
         }
     }
 
-    /**
-     * This method realizes stop server
-     */
+
     static void stopServer() {
         if (server != null)
             try {
@@ -78,5 +89,6 @@ public class Server {
     public void start() {
         startServer();
     }
+
 }
 
